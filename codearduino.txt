@@ -1,0 +1,252 @@
+#include <Servo.h>
+#include <Stepper.h>
+Servo hombro; //servomotor de hombro
+Servo codo; //servomotor de codo
+Servo pinzas;//sevomotor de pinzas 
+Servo biologico; //tapa
+Servo plastico;// tapa
+Servo metal;//tapa
+int option;
+Stepper motor(2048, 4, 6, 5, 7);
+
+void setup(){
+Serial.begin(9600);
+hombro.attach(8);
+codo.attach(9);
+pinzas.attach(10);
+biologico.attach(11);
+plastico.attach(12);
+metal.attach(13);
+motor.setSpeed(5);
+
+  hombro.write(0);
+    codo.write(0);
+    pinzas.write(0);
+    metal.write(0);
+    plastico.write(0);
+    biologico.write(0);
+
+
+}
+ 
+ void loop() {
+
+
+  if(Serial.available()>0){
+
+    option = Serial.read();
+    if(option == 'M'){      //Señal que envia al detectar metales 
+
+      hombro.write(0);
+      codo.write(0);
+      pinzas.write(0);
+      metal.write(0);
+      
+
+      delay(3000);
+
+      for(int i=0; i<=-90; i++){
+        metal.write(i);
+        delay(25);
+      
+      }
+
+      // Agarra el objeto 
+      for(int i=0; i<=90; i++){
+        pinzas.write(i);
+        delay(25);
+      }
+
+      //Alza el codo
+      for(int i=0; i<=45; i++){
+        codo.write(i);
+        delay(25);
+      }
+      
+      delay(1000);
+      for(int i=0; i<=90; i++){
+        hombro.write(i);
+        delay(25);
+      }
+
+      delay(1000);
+      for(int i=90; i>=0; i--){
+        pinzas.write(i);
+        delay(25);
+      }
+      delay(1000);
+      for (int i= 90; i>=0; i--){
+        hombro.write(i);
+        delay(25);
+      }
+      
+      //Alza el codo
+      for(int i=45; i>=0; i--){
+        codo.write(i);
+        delay(25);
+      }
+
+     
+      delay(1000);
+      motor.step(512);// el motor a paso gira 
+      delay(1000);
+
+      delay(1000);
+      for(int i=0; i<=90; i++){
+        pinzas.write(i);
+        delay(25);
+      }
+      delay(2000);
+
+      pinzas.write(0);
+      delay(2000);
+      motor.step(-512);
+      delay(3000);
+      metal.write(90);
+      delay(1000);
+
+    }
+
+    if(option == 'P'){      //Señal que envia al detectar plásticos 
+
+      hombro.write(0);
+      codo.write(0);
+      pinzas.write(0);
+      plastico.write(0);
+
+      delay(3000);
+
+      for(int i=0; i<=-90; i++){
+        plastico.write(i);
+        delay(25);
+      
+      }
+
+      // Agarra el objeto 
+      for(int i=0; i<=90; i++){
+        pinzas.write(i);
+        delay(25);
+      }
+      
+      //Alza el codo
+      for(int i=0; i<=45; i++){
+        codo.write(i);
+        delay(25);
+      }
+      
+      delay(1000);
+      for(int i=0; i<=90; i++){
+        hombro.write(i);
+        delay(25);
+      }
+
+      delay(1000);
+      for(int i=90; i>=0; i--){
+        pinzas.write(i);
+        delay(25);
+      }
+      delay(1000);
+      for (int i =90; i>=0; i--){
+        hombro.write(i);
+        delay(25);
+      }
+      
+      //Alza el codo
+      for(int i=45; i>=0; i--){
+        codo.write(i);
+        delay(25);
+      }
+
+      
+      delay(1000);
+      motor.step(700);// el motor a paso gira 
+      delay(1000);
+
+      delay(1000);
+      for(int i=0; i<=90; i++){
+        pinzas.write(i);
+        delay(25);
+      }
+      delay(2000);
+
+      pinzas.write(0);
+      motor.step(-700);
+      delay(3000);
+      plastico.write(90);
+      delay(1000);
+
+    }
+
+    if(option == 'B'){      //Señal que envia al detectar biológicas 
+
+      hombro.write(0);
+      codo.write(0);
+      pinzas.write(0);
+      biologico.write(0);
+
+      delay(3000);
+
+      for(int i=0; i<=-90; i++){
+        biologico.write(i);
+        delay(25);
+      
+      }
+
+      // Agarra el objeto 
+      for(int i=0; i<=90; i++){
+        pinzas.write(i);
+        delay(25);
+      }
+      
+      //Alza el codo
+      for(int i=0; i<=45; i++){
+        codo.write(i);
+        delay(25);
+      }
+      
+      delay(1000);
+      for(int i=0; i<=90; i++){
+        hombro.write(i);
+        delay(25);
+      }
+
+      delay(1000);
+      for(int i=90; i>=0; i--){
+        pinzas.write(i);
+        delay(25);
+      }
+      delay(1000);
+      for (int i =90; i>=0; i--){
+        hombro.write(i);
+        delay(25);
+      }
+      
+      //Alza el codo
+      for(int i=45; i>=0; i--){
+        codo.write(i);
+        delay(25);
+      }
+
+      
+      
+      delay(1000);
+      motor.step(300);// el motor a paso gira 
+      delay(1000);
+
+      delay(1000);
+      for(int i=0; i<=90; i++){
+        pinzas.write(i);
+        delay(25);
+      }
+      delay(2000);
+
+      pinzas.write(0);
+      motor.step(-300);
+      delay(3000);
+      biologico.write(90);
+      delay(1000);
+
+    }
+
+  }
+ }
