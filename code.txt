@@ -1,0 +1,227 @@
+import serial
+#Permite la comunicación de dispositivos a través de los puertos seriales.
+from tkinter import *
+#Permite crear interfaces gráficas de usuario.
+import imutils
+#Ayuda a OpenCV con funciones que redimensionan, rotan y transforman imágenes.
+from PIL import Image, ImageTk
+import time
+#Maneja y mide intervalos de tiempo y retrasos.
+from ultralytics import YOLO
+# YOLO detecta objetos en tiempo real, detecta objetos en imagenes y videos con velocidad y precisión.
+import numpy as np
+#Se especializa en el cálculo numérico y analiza los datos.
+import math
+#Realización de operaciones matemáticas.
+import cv2
+#Ayuda a OpenCV con funciones que redimensionan, rotan y transforman imágenes.
+
+ser=serial.Serial('COM8', 9600, timeout=1)
+time.sleep(1)
+def imagenes(imag, imagtxt): #Se definen las imagenes, especificamente sus formatos.
+    imag=imag
+    imagtxt=imagtxt
+
+     #Imagen detectada
+    imag=np.array(imag, dtype="uint8")
+    imag=cv2.cvtColor(imag, cv2.COLOR_BGR2RGB)
+    imag=Image.fromarray(imag)
+
+    imag_=ImageTk.PhotoImage(image=imag)
+    lblimag.configure(image=imag_)
+    lblimag.image=imag_
+
+     #Texto de imagen
+    imagtxt=np.array(imagtxt, dtype="uint8")
+    imagtxt=cv2.cvtColor(imagtxt, cv2.COLOR_BGR2RGB)
+    imagtxt=Image.fromarray(imagtxt)
+
+    imag_txt=ImageTk.PhotoImage(image=imagtxt)
+    lblimagtxt.configure(image=imag_txt)
+    lblimagtxt.image=imag_txt
+
+def clean_lbl():
+    #Limpiar
+    lblimag.config(image='')
+    lblimagtxt.config(image='')
+
+
+#Función de escaneo
+
+def Escaneo():
+    global imag_metal, imag_bio, imag_plastico
+    global imag_metaltxt, imag_biotxt, imag_plasticotxt, screen
+    global lblimag, lblimagtxt
+
+    #Interfaz
+    lblimag=Label(screen)
+    lblimag.place(x=75, y=260)
+
+    lblimagtxt=Label(screen)
+    lblimagtxt.place(x=995, y=310)
+    detectar=False
+
+    #Captura de video
+
+    if cap is not None:
+        ret, frame = cap.read()
+        frame_show = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        #Verdadero
+        if ret == True:
+
+            #Yolo y AntiSpoof
+            results = modelo(frame, stream=True, verbose=False)
+
+            for res in results:
+                #Caja
+                boxes=res.boxes
+                for box in boxes:
+                    detectar=True
+
+                    #Delimitación de caja
+                    x1, y1, x2, y2 = box.xyxy[0]
+                    x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+
+                    #Error < 0
+                    if x1 < 0: x1 = 0
+                    if y1 < 0: y1 = 0
+                    if x2 < 0: x2 = 0
+                    if y2 < 0: y2 = 0
+
+                    #Clases
+                    cls = int(box.cls[0])
+
+                    #Evaluar la confianza de la detección
+
+                    conf = math.ceil(box.conf[0])
+                    #print(f"Clase: {cls} Confidence: {conf}")
+                    #Metal
+
+                    if cls == 0:
+                        #Dibuja
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                        #Texto
+                        texto = f'{clsName[cls]} {int(conf)*100}%'
+                        tamanodetexto = cv2.getTextSize(texto, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                        dim = tamanodetexto[0]
+                        lineabase = tamanodetexto[1]
+
+                        #Rectángulo
+                        cv2.rectangle(frame_show, (x1, y1 - dim[1] - lineabase), (x1 + dim[0], y1 + lineabase), (0, 0, 0), cv2.FILLED)
+                        cv2.putText(frame_show, texto,(x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2 )
+
+                        #Clasificación
+                        imagenes(imag_metal, imag_metaltxt)
+                        if cls==0: ser.write(b'M')
+                        elif cls==0: ser.write(b'LL')
+                        break
+
+                    if cls == 1:
+                         #Dibujar
+                         cv2.rectangle(frame_show, (x1, y1), (x2, y2), (255, 255, 255), 2)
+                         #Text
+                         texto = f'{clsName[cls]} {int(conf)*100}%'
+                         tamanodetexto = cv2.getTextSize(texto, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                         dim = tamanodetexto[0]
+                         lineabase = tamanodetexto [1]
+
+                         #Rectángulo
+                         cv2.rectangle(frame_show, (x1, y1 - dim[1] - lineabase), (x1 + dim[0], y1 + lineabase ), (0, 0, 0, cv2.FILLED))
+                         cv2.putText(frame_show, texto, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2 )
+
+                         #Clasificación
+                         imagenes(imag_bio, imag_biotxt)
+                         if cls==1: ser.write(b'B')
+                         elif cls==1: ser.write(b'LL')
+                    break
+
+                    if cls==2:
+                            #Dibujar
+                            cv2.rectangle(frame_show, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                            #Texto
+                            texto = f'{clsName[cls]} {int(conf)*100}%'
+                            tamanodetexto = cv2.getTextSize(texto, cv2.FONT_HERSHEY_SIMPLEX, 1, 2)
+                            dim = tamanodetexto[0]
+                            lineabase = tamanodetexto [1]
+
+                            #Rectangulo
+                            cv2.rectangle(frame_show, (x1, y1 - dim[1] - lineabase), (x1 + dim[0], y1 + lineabase), (0, 0, 0), cv2.FILLED)
+                            cv2.putText(frame_show, texto, (x1, y1, - 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2 )
+
+                            #Clasificación
+                            imagenes(imag_plastico, imag_plasticotxt)
+                            if cls==2: ser.write(b'P')
+                            elif cls==2: ser.write(b'LL')
+                    break
+
+
+            if detectar == False:
+                     #Limpiar
+                     clean_lbl()
+
+            #Cambiar tamaño
+            frame_show = imutils.resize(frame_show, width=640)
+
+            #Convertir el video
+            im = Image.fromarray(frame_show)
+            img = ImageTk.PhotoImage(image = im)
+
+            #Mostrar la interfaz gráfica
+            lblVideo.configure(image = img)
+            lblVideo.image = img
+            lblVideo.after(10, Escaneo)
+
+        else:
+              cap.release()
+
+def vistaprincipal():
+    global cap, lblVideo, clsName, modelo, imag_metal, imag_bio, imag_plastico
+    global imag_metaltxt, imag_biotxt, imag_plasticotxt, screen
+
+
+    #Vista Principal
+    screen = Tk()
+    screen.title('Reciclaje mediante IA')
+    screen.geometry('1280x720')
+
+     #Fondo
+
+    imagendefondo = PhotoImage(file = "DiseñoGUI/ventanaa.png")
+    fondo = Label(image = imagendefondo, text= "Comienzo")
+    fondo.place(x=0, y=0, relwidth=1, relheight=1)
+
+    #Adjuntos/Clases: 0 Metal, 1 Biológicos, 2 Plásticos
+
+    #Modelos de reconocimiento
+
+    modelo = YOLO('modelos_de_reconocimiento/iarec.pt')
+
+    #Cls
+    clsName = ['Metal, Bio, Plastico']
+
+    #Imagenes
+
+    imag_metal = cv2.imread("DiseñoGUI/Metales.png")
+    imag_bio = cv2.imread("DiseñoGUI/bio.png")
+    imag_plastico = cv2.imread("DiseñoGUI/plastic.png")
+    imag_metaltxt = cv2.imread("DiseñoGUI/textometal.png")
+    imag_biotxt = cv2.imread("DiseñoGUI/textobio.png")
+    imag_plasticotxt = cv2.imread("DiseñoGUI/textoplas.png")
+
+    #Video
+    lblVideo = Label(screen)
+    lblVideo.place(x=317, y=180)
+
+    #Camara
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    cap.set(3, 1280)
+    cap.set(4, 720)
+    Escaneo()
+
+    #Ejecutar
+    screen.mainloop()
+
+if __name__ == "__main__":
+ vistaprincipal()
